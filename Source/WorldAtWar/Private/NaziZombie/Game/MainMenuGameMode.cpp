@@ -21,7 +21,9 @@ void AMainMenuGameMode::BeginPlay()
 
 void AMainMenuGameMode::CreateServer()
 {
-	FServerData ServerData = FServerData();
+	SetupBeacon();
+
+	/*FServerData ServerData = FServerData();
 
 	ServerData.ServerName = "MY TEST SERVER NAME";
 	ServerData.CurrentPlayers = 3;
@@ -46,7 +48,7 @@ void AMainMenuGameMode::CreateServer()
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 
 	Request->SetContentAsString(StringToSend);
-	Request->ProcessRequest();
+	Request->ProcessRequest();*/
 }
 
 void AMainMenuGameMode::OnProcessRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool Success)
@@ -68,10 +70,13 @@ void AMainMenuGameMode::SetupBeacon()
 		if (Host->InitHost())
 		{
 			Host->PauseBeaconRequests(false);
-			if (ALobbyBeaconObject* LobbyBeaconObj = GetWorld()->SpawnActor<ALobbyBeaconObject>(ALobbyBeaconObject::StaticClass()))
+
+			HostBeacon = GetWorld()->SpawnActor<ALobbyBeaconObject>(ALobbyBeaconObject::StaticClass());
+			if (HostBeacon)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("CREATED AND REGISTERED LOBBY BEACON HOST"));
-				Host->RegisterHost(LobbyBeaconObj);
+				Host->RegisterHost(HostBeacon);
+				
 			}
 		}
 	}

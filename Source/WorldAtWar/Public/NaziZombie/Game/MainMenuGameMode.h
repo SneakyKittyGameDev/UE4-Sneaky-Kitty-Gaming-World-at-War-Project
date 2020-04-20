@@ -37,6 +37,9 @@ protected:
 
 	void OnProcessRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool Success);
 
+	UPROPERTY(BlueprintReadOnly)
+		class ALobbyBeaconObject* HostBeacon;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -45,4 +48,5 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 		void CreateServer();
+
 };
