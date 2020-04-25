@@ -10,7 +10,8 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"OnlineSubsystemUtils"
+				"OnlineSubsystemUtils",
+				"Lobby"
 			]
 		}
 	],
@@ -36,6 +37,10 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineFramework",
 			"Enabled": true
 		}
 	]
