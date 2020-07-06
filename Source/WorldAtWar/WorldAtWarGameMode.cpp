@@ -15,3 +15,14 @@ AWorldAtWarGameMode::AWorldAtWarGameMode()
 	// use our custom HUD class
 	HUDClass = AWorldAtWarHUD::StaticClass();
 }
+
+void AWorldAtWarGameMode::BeginPlay()
+{
+	UE_LOG(LogTemp, Warning, TEXT("BEGIN PLAY GAMEMODE"));
+}
+
+void AWorldAtWarGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+	UE_LOG(LogTemp, Warning, TEXT("PostLogin GAMEMODE"));
+}

@@ -20,17 +20,19 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 		class USkeletalMeshComponent* Mesh1P;
 
-	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		class USkeletalMeshComponent* FP_Gun;
-
-	/** Location on gun mesh where projectiles should spawn. */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		class USceneComponent* FP_MuzzleLocation;
-
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FirstPersonCameraComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		TSubclassOf<class AWeaponBase> StartingWeaponClass;
+
+	class AWeaponBase* CurrentWeapon;
+	int32 WeaponIndex;
+	TArray<AWeaponBase*> WeaponArray;
+
+	//set to replicate, skip owner
+	bool bIsAiming;
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,25 +47,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseLookUpRate;
 
-	/** Gun muzzle's offset from the characters location */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		FVector GunOffset;
-
-	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-		TSubclassOf<class AWorldAtWarProjectile> ProjectileClass;
-
-	/** Sound to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		class USoundBase* FireSound;
-
-	/** AnimMontage to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		class UAnimMontage* FireAnimation;
-
 protected:
 	/** Fires a projectile. */
-	void OnFire();
+	virtual void OnFire();
+
+	virtual void OnAimingStart();
+	virtual void OnAimingEnd();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -76,6 +65,10 @@ protected:
 
 	//called when looking up/down
 	void LookUpAtRate(float Rate);
+
+public:
+	UFUNCTION(BlueprintCallable)
+		bool GetIsAiming();
 
 public:	
 	// Called to bind functionality to input

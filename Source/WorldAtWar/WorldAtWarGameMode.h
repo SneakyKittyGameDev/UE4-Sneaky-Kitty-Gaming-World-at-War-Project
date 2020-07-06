@@ -13,6 +13,10 @@ class AWorldAtWarGameMode : public AGameModeBase
 
 public:
 	AWorldAtWarGameMode();
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };
 
 

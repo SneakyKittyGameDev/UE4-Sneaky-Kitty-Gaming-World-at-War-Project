@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.24",
+	"EngineAssociation": "{B82B42D2-4F2C-C0CD-9CFC-EDA835352353}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"OnlineSubsystemUtils",
-				"Lobby"
+				"Lobby",
+				"AIModule"
 			]
 		}
 	],
@@ -40,7 +41,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "OnlineFramework",
+			"Name": "LiveLink",
 			"Enabled": true
 		}
 	]
