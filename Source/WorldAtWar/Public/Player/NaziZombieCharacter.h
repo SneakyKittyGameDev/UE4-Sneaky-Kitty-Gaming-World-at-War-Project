@@ -8,7 +8,6 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractChanged, const FString&, NewInteractMessage);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPointsChanged, int32, NewPoints);
 
 UCLASS()
 class WORLDATWAR_API ANaziZombieCharacter : public ACharacterBase
@@ -21,17 +20,17 @@ protected:
 	UPROPERTY(BlueprintAssignable)
 		FInteractChanged NewInteractMessage;
 
-	UPROPERTY(BlueprintAssignable)
-		FPointsChanged NewPoints;
-
 	FTimerHandle TInteractTimerHandle;
 	class AInteractableBase* Interactable;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
 		float InteractionRange;
 
-	UPROPERTY(EditDefaultsOnly)//Set To Replicate MOVE TO PLAYER STATE WHEN CREATED
-		int32 Points;
+	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
+		TSubclassOf<class AKnife> KnifeClass;
+
+	UPROPERTY(Replicated)
+		class AKnife* Knife;
 
 protected:
 	void Interact();
@@ -41,15 +40,18 @@ protected:
 	void Server_Interact_Implementation(class AInteractableBase* InteractingObject);
 
 	void SetInteractableObject();
-
+	
 	virtual void OnFire() override;
+	virtual void OnStopFire() override;
+	void OnReload();
 
-public:
-	void IncrementPoints(uint16 Value);
-	bool DecrementPoints(uint16 Value);
+	void OnKnifeAttack();
 
 	UFUNCTION(BlueprintCallable)
-		int32 GetPoints();
+		FORCEINLINE class AKnife* GetKnife() {return Knife;}
+	
+public:
+	void GivePlayerWeapon(class AWeaponBase* Weapon);
 
 protected:
 	virtual void BeginPlay() override;

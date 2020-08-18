@@ -3,27 +3,46 @@
 
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/InteractableBase.h"
-#include "WorldAtWar/Public/NaziZombie/Zombie/ZombieBase.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/WeaponBase.h"
+#include "WorldAtWar/Public/NaziZombie/Useables/Weapons/Knife.h"
 
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Animation/AnimInstance.h"
+#include "Net/UnrealNetwork.h"
 
 ANaziZombieCharacter::ANaziZombieCharacter()
 {
 	Interactable = nullptr;
 	InteractionRange = 150.0f;
-	Points = 500;
 }
 
 void ANaziZombieCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (HasAuthority())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		
+		Knife = GetWorld()->SpawnActor<AKnife>(KnifeClass, SpawnParams);
+		if (Knife)
+		{
+			if (IsLocallyControlled())
+				Knife->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
+		}
+	}
 	GetWorld()->GetTimerManager().SetTimer(TInteractTimerHandle, this, &ANaziZombieCharacter::SetInteractableObject, 0.1f, true);
+}
+
+void ANaziZombieCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ANaziZombieCharacter, Knife);
 }
 
 void ANaziZombieCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -33,7 +52,11 @@ void ANaziZombieCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	check(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ANaziZombieCharacter::Interact);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ANaziZombieCharacter::OnReload);
+
+	PlayerInputComponent->BindAction("KnifeAttack", IE_Pressed, this, &ANaziZombieCharacter::OnKnifeAttack);
 }
+
 
 void ANaziZombieCharacter::Interact()
 {
@@ -55,7 +78,7 @@ void ANaziZombieCharacter::Server_Interact_Implementation(AInteractableBase* Int
 {
 	float Distance = GetDistanceTo(InteractingObject);
 
-	if (Distance < InteractionRange + 30.0f)
+	if (Distance < InteractionRange + 80.0f)
 		InteractingObject->Use(this);
 }
 
@@ -87,42 +110,48 @@ void ANaziZombieCharacter::SetInteractableObject()
 	}
 }
 
-void ANaziZombieCharacter::IncrementPoints(uint16 Value)
+void ANaziZombieCharacter::GivePlayerWeapon(AWeaponBase* Weapon)
 {
-	Points += Value;
-	NewPoints.Broadcast(Points);
-	UE_LOG(LogTemp, Warning, TEXT("POINTS: %d"), Points);
-}
-
-bool ANaziZombieCharacter::DecrementPoints(uint16 Value)
-{
-	if (Points - Value < 0)
-		return false;
-	else
-		Points -= Value;
-
-	NewPoints.Broadcast(Points);
-	UE_LOG(LogTemp, Warning, TEXT("POINTS: %d"), Points);
-	return true;
-}
-
-int32 ANaziZombieCharacter::GetPoints()
-{
-	return Points;
+	if (HasAuthority() && Weapon)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ADDING WEAPON TO WEAPON ARRAY"));
+		if (WeaponArray.Num() >= 2)
+		{
+			WeaponArray[WeaponIndex]->Destroy();
+			WeaponArray[WeaponIndex] = Weapon;
+		}
+		else
+		{
+			WeaponArray.Add(Weapon);
+			WeaponIndex = WeaponArray.Num() - 1;
+		}
+		CurrentWeapon = Weapon;
+		OnRep_AttachWeapon();
+	}
 }
 
 void ANaziZombieCharacter::OnFire()
 {
 	if (CurrentWeapon)
+		CurrentWeapon->Fire();
+}
+
+void ANaziZombieCharacter::OnStopFire()
+{
+	if (CurrentWeapon)
+		CurrentWeapon->StopFiring();
+}
+
+void ANaziZombieCharacter::OnReload()
+{
+	if (CurrentWeapon)
+		CurrentWeapon->Reload();
+}
+
+void ANaziZombieCharacter::OnKnifeAttack()
+{
+	if (Knife)
 	{
-		CurrentWeapon->Fire(this);
-		if (UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance())
-		{
-			if (UAnimMontage* FireMontage = CurrentWeapon->GetFireAnimMontage())
-			{
-				UE_LOG(LogTemp, Warning, TEXT("PLAYING FIRE ANIM MONTAGE"));
-				AnimInstance->Montage_Play(FireMontage);
-			}
-		}
+		Knife->OnKnife();
 	}
 }

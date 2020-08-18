@@ -4,6 +4,7 @@
 #include "WorldAtWar/Public/NaziZombie/Useables/Barricade.h"
 #include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameMode.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
+#include "WorldAtWar/Public/Player/NaziZombiePlayerState.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -46,15 +47,21 @@ void ABarricade::OnRep_BarricadeUsed()
 
 void ABarricade::Use(ANaziZombieCharacter* Player)
 {
-	if (HasAuthority() && !bIsUsed && Player && Player->DecrementPoints(Cost))
+	if (HasAuthority() && !bIsUsed && Player)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IN USE FUNCTION FOR %s"), *GetName());
-		bIsUsed = true;
-		OnRep_BarricadeUsed();
-
-		if (ANaziZombieGameMode* GM = GetWorld()->GetAuthGameMode<ANaziZombieGameMode>())
+		if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
 		{
-			GM->NewZoneActive(AccessZone);
+			if (!PState->DecrementPoints(Cost))
+				return;
+
+			UE_LOG(LogTemp, Warning, TEXT("IN USE FUNCTION FOR %s"), *GetName());
+			bIsUsed = true;
+			OnRep_BarricadeUsed();
+
+			if (ANaziZombieGameMode* GM = GetWorld()->GetAuthGameMode<ANaziZombieGameMode>())
+			{
+				GM->NewZoneActive(AccessZone);
+			}
 		}
 	}
 }

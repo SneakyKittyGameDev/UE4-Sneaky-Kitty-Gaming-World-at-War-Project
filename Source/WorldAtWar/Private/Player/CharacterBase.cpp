@@ -11,6 +11,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -47,13 +48,133 @@ void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//spawn weapon using StartingWeaponClass
-	CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(StartingWeaponClass);
+	if (HasAuthority())
+	{
+		//spawn weapon using StartingWeaponClass
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(StartingWeaponClass, SpawnParams);
+		if (CurrentWeapon)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SPAWNED AND ATTEMPTED TO ATTACH WEAPON TO HAND"));
+			PreviousWeapon = CurrentWeapon;
+			WeaponArray.Add(CurrentWeapon);
+			CurrentWeapon->WeaponIsNowInHand(true);
+			OnRep_AttachWeapon();
+		}
+		//if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(SecondWeaponClass, SpawnParams))
+		//{
+		//	Weapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
+		//	WeaponArray.Add(Weapon);
+		//}
+		//if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(ThirdWeaponClass, SpawnParams))
+		//{
+		//	Weapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
+		//	WeaponArray.Add(Weapon);
+		//}
+	}
+}
+
+void ACharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACharacterBase, CurrentWeapon);
+	DOREPLIFETIME_CONDITION(ACharacterBase, WeaponIndex, COND_OwnerOnly);
+	DOREPLIFETIME(ACharacterBase, WeaponArray);
+	DOREPLIFETIME_CONDITION(ACharacterBase, bIsAiming, COND_SkipOwner);
+}
+
+bool ACharacterBase::Server_SwitchWeapon_Validate(AWeaponBase* NewWeapon, int32 NewWeaponIndex)
+{
+	return true;
+}
+
+void ACharacterBase::Server_SwitchWeapon_Implementation(AWeaponBase* NewWeapon, int32 NewWeaponIndex)
+{
+	WeaponIndex = NewWeaponIndex;
+	CurrentWeapon = NewWeapon;
+	OnRep_AttachWeapon();
+}
+
+void ACharacterBase::OnRep_AttachWeapon()
+{
+	if (PreviousWeapon)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HIDING PREVIOUS WEAPON"));
+		PreviousWeapon->WeaponIsNowInHand(false);
+	}
 	if (CurrentWeapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SPAWNED AND ATTEMPTED TO ATTACH WEAPON TO HAND"));
-		CurrentWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetIncludingScale, FName("s_weaponSocket"));
-		WeaponArray.Add(CurrentWeapon);
+		CurrentWeapon->WeaponIsNowInHand(true);
+		PreviousWeapon = CurrentWeapon;
+		if (IsLocallyControlled())//remove true
+		{
+			CurrentWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
+		}
+		else
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
+		}
+	}
+}
+
+void ACharacterBase::SwitchNextWeapon()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Switching To Next Weapon"));
+	if (CurrentWeapon)
+	{
+		if (WeaponArray.Num() > WeaponIndex + 1)
+		{
+			++WeaponIndex;
+			if (AWeaponBase* NextWeapon = WeaponArray[WeaponIndex])
+			{
+				CurrentWeapon->WeaponIsNowInHand(false);
+				CurrentWeapon = NextWeapon;
+				CurrentWeapon->WeaponIsNowInHand(true);
+			}
+		}
+		else
+		{
+			WeaponIndex = 0;
+			if (AWeaponBase* NextWeapon = WeaponArray[WeaponIndex])
+			{
+				CurrentWeapon->WeaponIsNowInHand(false);
+				CurrentWeapon = NextWeapon;
+				CurrentWeapon->WeaponIsNowInHand(true);
+			}
+		}
+		Server_SwitchWeapon(CurrentWeapon, WeaponIndex);
+	}
+}
+
+void ACharacterBase::SwitchPreviousWeapon()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Switching To Previous Weapon"));
+	if (CurrentWeapon)
+	{
+		if (WeaponIndex - 1 >= 0)
+		{
+			--WeaponIndex;
+			if (AWeaponBase* NextWeapon = WeaponArray[WeaponIndex])
+			{
+				CurrentWeapon->WeaponIsNowInHand(false);
+				CurrentWeapon = NextWeapon;
+				CurrentWeapon->WeaponIsNowInHand(true);
+			}
+		}
+		else
+		{
+			WeaponIndex = WeaponArray.Num() - 1;
+			if (AWeaponBase* NextWeapon = WeaponArray[WeaponIndex])
+			{
+				CurrentWeapon->WeaponIsNowInHand(false);
+				CurrentWeapon = NextWeapon;
+				CurrentWeapon->WeaponIsNowInHand(true);
+			}
+		}
+		Server_SwitchWeapon(CurrentWeapon, WeaponIndex);
 	}
 }
 
@@ -74,7 +195,14 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACharacterBase::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACharacterBase::OnStopFire);
 
+	PlayerInputComponent->BindAction("SelectFireWeaponToggle", IE_Pressed, this, &ACharacterBase::ChangeWeaponFireMode);
+
+	PlayerInputComponent->BindAction("SwitchNextWeapon", IE_Pressed, this, &ACharacterBase::SwitchNextWeapon);
+	PlayerInputComponent->BindAction("SwitchPreviousWeapon", IE_Pressed, this, &ACharacterBase::SwitchPreviousWeapon);
+
+	
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &ACharacterBase::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ACharacterBase::MoveRight);
@@ -90,19 +218,49 @@ void ACharacterBase::OnFire()
 	
 }
 
+void ACharacterBase::OnStopFire()
+{
+	
+}
+
+void ACharacterBase::ChangeWeaponFireMode()
+{
+	if (CurrentWeapon)
+		CurrentWeapon->ChangeFireMode();
+}
+
+bool ACharacterBase::Server_SetAiming_Validate(bool WantsToAim)
+{
+	return true;
+}
+
+void ACharacterBase::Server_SetAiming_Implementation(bool WantsToAim)
+{
+	bIsAiming = WantsToAim;
+}
+
 void ACharacterBase::OnAimingStart()
 {
 	bIsAiming = true;
+	if (!HasAuthority())
+		Server_SetAiming(bIsAiming);
 }
 
 void ACharacterBase::OnAimingEnd()
 {
 	bIsAiming = false;
+	if (!HasAuthority())
+		Server_SetAiming(bIsAiming);
 }
 
 bool ACharacterBase::GetIsAiming()
 {
 	return bIsAiming;
+}
+
+AWeaponBase* ACharacterBase::GetCurrentWeapon()
+{
+	return CurrentWeapon;
 }
 
 

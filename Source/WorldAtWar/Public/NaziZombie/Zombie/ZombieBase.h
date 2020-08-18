@@ -16,9 +16,29 @@ public:
 	AZombieBase();
 
 protected:
+	UPROPERTY(Replicated)
+		float Health;
+
+	UPROPERTY(EditDefaultsOnly)
+		float CleanupDelay;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Die, EditAnywhere)
+		bool bIsDead;
+	UFUNCTION()
+		void OnRep_Die();
+	void OnCleanup();
+
+protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	//0 = none, 1 = limb, 2 = chest, 3 = abdomen, 4 = neck, 5 = head
+	uint8 GetHitPart(FString BoneName);
+	void DecrementHealth(int16 Damage);
+	void Die();
+
+	uint8 GetPointsForHit(uint8 HitPart, float Damage);
 
 public:
-	void Hit(class ANaziZombieCharacter* Player);
+	void Hit(class ANaziZombieCharacter* Player, class AKnife* Knife);
+	void Hit(class ANaziZombieCharacter* Player, FHitResult HitResult);
 };

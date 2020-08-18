@@ -1,0 +1,5 @@
+Tim Maness: Hope this doesn't offend you or step on your toes, Sneaky Kitty....  But I have some quick "enhancements" that could be added here...
+If you Collapse the "On chat Received" to a function, then you can reuse it for the "On Host Chat Received" Event, and by adding the "Scroll to end" node to the last bit, when a new message comes in it will automatically scroll to the bottom of the chat window scroll box.
+Also, on your text committed you can add a "Set Text" node to the input message and leave it blank, which should clear the text on enter.
+
+show anim notify for sounds in reload animations

@@ -33,10 +33,13 @@ protected:
 	FTimerHandle TZombieSpawnHandle;
 	//max zombies on map is 24 + playercount*6
 
+	//zombies per round levels 1-5 is ((round number * 0.2) * max zombies on map) = zombies per round
+	//example round 3 with 2 players = (3 * 0.2) * 30 = 18 zombies on round 3 with 2 players
+	
 	//zombies per round is multiplier * max zombies on map. multiplier is round number * 0.15.
 	//example: round 10 with 3 players is (multiplier = 10*0.15) = 1.5 * 36(24+playercount*6) = 54 TOTAL zombies on round 10 with 3 players.
 
-	uint16 ZombiesRemaining;
+	uint32 ZombiesRemaining;
 
 protected:
 	void CalculateZombieCount();
@@ -50,4 +53,5 @@ protected:
 
 public:
 	void NewZoneActive(uint8 ZoneNumber);
+	void ZombieKilled();
 };

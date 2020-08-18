@@ -26,13 +26,35 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		TSubclassOf<class AWeaponBase> StartingWeaponClass;
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		TSubclassOf<class AWeaponBase> SecondWeaponClass;
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		TSubclassOf<class AWeaponBase> ThirdWeaponClass;
 
-	class AWeaponBase* CurrentWeapon;
-	int32 WeaponIndex;
-	TArray<AWeaponBase*> WeaponArray;
+	UPROPERTY(ReplicatedUsing = OnRep_AttachWeapon)
+		class AWeaponBase* CurrentWeapon;
+	UFUNCTION()
+		void OnRep_AttachWeapon();
+	//UPROPERTY(Replicated)
+	class AWeaponBase* PreviousWeapon;
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SwitchWeapon(class AWeaponBase* NewWeapon, int32 NewWeaponIndex);
+	bool Server_SwitchWeapon_Validate(class AWeaponBase* NewWeapon, int32 NewWeaponIndex);
+	void Server_SwitchWeapon_Implementation(class AWeaponBase* NewWeapon, int32 NewWeaponIndex);
+
+	UPROPERTY(Replicated)
+		int32 WeaponIndex;
+	UPROPERTY(Replicated)
+		TArray<AWeaponBase*> WeaponArray;
 
 	//set to replicate, skip owner
-	bool bIsAiming;
+	UPROPERTY(Replicated)
+		bool bIsAiming;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SetAiming(bool WantsToAim);
+	bool Server_SetAiming_Validate(bool WantsToAim);
+	void Server_SetAiming_Implementation(bool WantsToAim);
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,8 +70,13 @@ public:
 		float BaseLookUpRate;
 
 protected:
+	void SwitchNextWeapon();
+	void SwitchPreviousWeapon();
+	
 	/** Fires a projectile. */
 	virtual void OnFire();
+	virtual void OnStopFire();
+	virtual void ChangeWeaponFireMode();
 
 	virtual void OnAimingStart();
 	virtual void OnAimingEnd();
@@ -70,12 +97,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 		bool GetIsAiming();
 
+	UFUNCTION(BlueprintCallable)
+		class AWeaponBase* GetCurrentWeapon();
+
 public:	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	/** Returns Mesh1P subobject **/
-	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	UFUNCTION(BlueprintCallable)
+		FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 };

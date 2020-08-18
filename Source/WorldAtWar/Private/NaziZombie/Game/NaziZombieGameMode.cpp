@@ -51,19 +51,9 @@ void ANaziZombieGameMode::BeginPlay()
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ZombieSpawns: %d"), ZombieSpawnPoints.Num());
-
-	GetWorld()->GetTimerManager().SetTimer(TZombieSpawnHandle, this, &ANaziZombieGameMode::SpawnZombie, 2.0f, true);
-}
-
-void ANaziZombieGameMode::CalculateZombieCount()
-{
-	if (ZombieGameState)
-	{
-		uint16 RoundNumber = ZombieGameState->GetRoundNumber();
-		//do calculation here
-		ZombiesRemaining = 5;
-	}
+	GetWorld()->GetTimerManager().SetTimer(TZombieSpawnHandle, this, &ANaziZombieGameMode::SpawnZombie, 1.0f, true);
+	GetWorld()->GetTimerManager().PauseTimer(TZombieSpawnHandle);
+	CalculateZombieCount();
 }
 
 void ANaziZombieGameMode::SetSpawnPoints()
@@ -105,30 +95,6 @@ void ANaziZombieGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 }
 
-void ANaziZombieGameMode::SpawnZombie()
-{
-	if (ZombiesRemaining > 0)
-	{
-		int RandomIndex = FMath::RandRange(0, ActiveZombieSpawnPoints.Num() - 1);
-
-		if (ANaziZombieZombieSpawnPoint* SpawnPoint = ActiveZombieSpawnPoints[RandomIndex])
-		{
-			FVector Loc = SpawnPoint->GetActorLocation();
-			FRotator Rot = SpawnPoint->GetActorRotation();
-
-			if (AZombieBase* Zombie = GetWorld()->SpawnActor<AZombieBase>(ZombieClass, Loc, Rot))
-			{
-				//UE_LOG(LogTemp, Warning, TEXT("SPAWNING ZOMBIE"));
-				--ZombiesRemaining;
-			}
-		}
-	}
-	else
-	{
-		GetWorld()->GetTimerManager().PauseTimer(TZombieSpawnHandle);
-	}
-}
-
 void ANaziZombieGameMode::NewZoneActive(uint8 ZoneNumber)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SETTING ACTIVE ZONE: %d"), ZoneNumber);
@@ -149,5 +115,80 @@ void ANaziZombieGameMode::NewZoneActive(uint8 ZoneNumber)
 			//remove spawn point from the ZombieSpawnPoints array
 			ZombieSpawnPoints.RemoveAt(x);
 		}
+	}
+}
+
+void ANaziZombieGameMode::SpawnZombie()
+{
+	if (ZombieGameState)
+	{
+		uint8 PlayerCount = ZombieGameState->PlayerArray.Num();
+		uint8 MaxZombiesOnMapAtOnce = 24;
+		if (PlayerCount > 1)
+			MaxZombiesOnMapAtOnce += PlayerCount * 6;
+		
+		if (ZombiesRemaining > 0 && ZombieGameState->GetZombiesOnMap() <= MaxZombiesOnMapAtOnce - 1)
+		{
+			int RandomIndex = FMath::RandRange(0, ActiveZombieSpawnPoints.Num() - 1);
+
+			if (ANaziZombieZombieSpawnPoint* SpawnPoint = ActiveZombieSpawnPoints[RandomIndex])
+			{
+				FVector Loc = SpawnPoint->GetActorLocation();
+				FRotator Rot = SpawnPoint->GetActorRotation();
+
+				if (AZombieBase* Zombie = GetWorld()->SpawnActor<AZombieBase>(ZombieClass, Loc, Rot))
+				{
+					
+					ZombieGameState->ZombieSpawned();
+					--ZombiesRemaining;
+				}
+			}
+		}
+		else if (ZombiesRemaining <= 0)
+		{
+			GetWorld()->GetTimerManager().PauseTimer(TZombieSpawnHandle);
+		}
+	}
+}
+
+void ANaziZombieGameMode::CalculateZombieCount()
+{
+	if (ZombieGameState)
+	{
+		uint16 RoundNumber = ZombieGameState->GetRoundNumber();
+		uint8 PlayerCount = ZombieGameState->PlayerArray.Num();
+		uint8 MaxZombiesOnMapAtOnce = 24;
+		if (PlayerCount > 1)
+			MaxZombiesOnMapAtOnce += PlayerCount * 6;
+
+		UE_LOG(LogTemp, Warning, TEXT("PlayerCount: %d"), PlayerCount);
+		if (RoundNumber > 0 && RoundNumber <= 5)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ROUNDS 1-5"));
+			ZombiesRemaining = FMath::FloorToInt((RoundNumber * 0.2f) * MaxZombiesOnMapAtOnce);
+			UE_LOG(LogTemp, Warning, TEXT("ZombiesRemaining: %d"), ZombiesRemaining);
+		}
+		else
+		{
+			ZombiesRemaining = FMath::FloorToInt((RoundNumber * 0.15f) * MaxZombiesOnMapAtOnce);
+		}
+		//do calculation here
+		ZombieGameState->SetTotalZombiesRemaining(ZombiesRemaining);
+		GetWorld()->GetTimerManager().UnPauseTimer(TZombieSpawnHandle);
+	}
+}
+
+void ANaziZombieGameMode::ZombieKilled()
+{
+	if (ZombieGameState)
+	{
+		ZombieGameState->ZombieKilled();
+		if (ZombieGameState->GetTotalZombiesRemaining() == 0)
+		{//start new round
+			ZombieGameState->IncrementRoundNumber();
+			FTimerHandle TempHandle;
+			GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &ANaziZombieGameMode::CalculateZombieCount, 5.0f, false);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Zombies Remaining: %d"), ZombieGameState->GetTotalZombiesRemaining());
 	}
 }
