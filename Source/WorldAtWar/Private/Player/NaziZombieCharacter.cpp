@@ -31,8 +31,7 @@ void ANaziZombieCharacter::BeginPlay()
 		Knife = GetWorld()->SpawnActor<AKnife>(KnifeClass, SpawnParams);
 		if (Knife)
 		{
-			if (IsLocallyControlled())
-				Knife->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
+			OnRep_KnifeAttached();
 		}
 	}
 	GetWorld()->GetTimerManager().SetTimer(TInteractTimerHandle, this, &ANaziZombieCharacter::SetInteractableObject, 0.1f, true);
@@ -57,6 +56,17 @@ void ANaziZombieCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	PlayerInputComponent->BindAction("KnifeAttack", IE_Pressed, this, &ANaziZombieCharacter::OnKnifeAttack);
 }
 
+
+void ANaziZombieCharacter::OnRep_KnifeAttached()
+{
+	if (Knife)
+	{
+		if (IsLocallyControlled())
+			Knife->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
+		else
+			Knife->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
+	}
+}
 
 void ANaziZombieCharacter::Interact()
 {

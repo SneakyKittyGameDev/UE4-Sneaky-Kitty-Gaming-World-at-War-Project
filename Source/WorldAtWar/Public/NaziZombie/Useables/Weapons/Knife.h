@@ -22,7 +22,9 @@ protected:
 		class UBoxComponent* CollisionComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
-		class UAnimMontage* FPSKnifeMontage;
+		class UAnimMontage* FPSArmsMontage;
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		class UAnimMontage* ThirdPersonMontage;
 
 	bool bCanDamage;
 	bool bCanAttack;

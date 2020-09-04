@@ -83,25 +83,25 @@ void AKnife::Server_ZombieHit_Implementation(AZombieBase* Zombie)
 void AKnife::OnKnife()
 {
 	//handle client knifing to keep it responsive
-	if (bCanAttack && FPSKnifeMontage)
+	if (bCanAttack && FPSArmsMontage)
 	{
 		if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
 		{
 			if (UAnimInstance* AnimInstance = Player->GetMesh1P()->GetAnimInstance())
 			{
-				AnimInstance->Montage_Play(FPSKnifeMontage);
+				AnimInstance->Montage_Play(FPSArmsMontage);
 				if (bJustHitZombie)
-					AnimInstance->Montage_JumpToSection(FName("KnifeAttack2"), FPSKnifeMontage);
+					AnimInstance->Montage_JumpToSection(FName("KnifeAttack2"), FPSArmsMontage);
 				else
-					AnimInstance->Montage_JumpToSection(FName("KnifeAttack1"), FPSKnifeMontage);
+					AnimInstance->Montage_JumpToSection(FName("KnifeAttack1"), FPSArmsMontage);
 			}
 		}
 		
-	}
-	if (GetWorld()->IsServer())//not working when client attacks
+		if (GetWorld()->IsServer())
 			Multi_KnifeAttack();
 		else
 			Server_KnifeAttack();
+	}
 }
 
 void AKnife::SetCanDamage(bool CanCauseDamage)
@@ -129,20 +129,21 @@ bool AKnife::Multi_KnifeAttack_Validate()
 	return true;
 }
 
-void AKnife::Multi_KnifeAttack_Implementation()//knife attack does not replicate
+void AKnife::Multi_KnifeAttack_Implementation()
 {
 	if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
 	{
 		if (!Player->IsLocallyControlled())
 		{
-			if (FPSKnifeMontage)
+			if (ThirdPersonMontage)
 			{
-				if (UAnimInstance* AnimInstance = Player->GetMesh1P()->GetAnimInstance())
+				if (UAnimInstance* AnimInstance = Player->GetMesh()->GetAnimInstance())
 				{
+					AnimInstance->Montage_Play(ThirdPersonMontage);
 					if (bJustHitZombie)
-						AnimInstance->Montage_JumpToSection(FName("KnifeAttack2"), FPSKnifeMontage);
+						AnimInstance->Montage_JumpToSection(FName("KnifeAttack2"), ThirdPersonMontage);
 					else
-						AnimInstance->Montage_JumpToSection(FName("KnifeAttack1"), FPSKnifeMontage);
+						AnimInstance->Montage_JumpToSection(FName("KnifeAttack1"), ThirdPersonMontage);
 				}
 			}
 		}

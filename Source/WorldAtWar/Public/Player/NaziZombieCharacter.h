@@ -29,8 +29,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
 		TSubclassOf<class AKnife> KnifeClass;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_KnifeAttached)
 		class AKnife* Knife;
+	UFUNCTION()
+		void OnRep_KnifeAttached();
 
 protected:
 	void Interact();
