@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CharacterBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int32, MagazineAmmo, int32, TotalAmmo);
 
 UCLASS()
 class WORLDATWAR_API ACharacterBase : public ACharacter
@@ -16,6 +17,9 @@ public:
 	ACharacterBase();
 
 protected:
+	UPROPERTY(BlueprintAssignable)
+		FAmmoChanged OnAmmoChanged;
+	
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 		class USkeletalMeshComponent* Mesh1P;
@@ -26,10 +30,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		TSubclassOf<class AWeaponBase> StartingWeaponClass;
-	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
-		TSubclassOf<class AWeaponBase> SecondWeaponClass;
-	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
-		TSubclassOf<class AWeaponBase> ThirdWeaponClass;
 
 	UPROPERTY(ReplicatedUsing = OnRep_AttachWeapon)
 		class AWeaponBase* CurrentWeapon;
@@ -99,6 +99,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		class AWeaponBase* GetCurrentWeapon();
+
+	TArray<AWeaponBase*>* GetWeaponArray() {return &WeaponArray;}
+
+	UFUNCTION(BlueprintCallable)
+		void RefreshAmmoWidget();
 
 public:	
 	// Called to bind functionality to input

@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/Player/CharacterBase.h"
 #include "WorldAtWar/WorldAtWarProjectile.h"
@@ -63,17 +62,42 @@ void ACharacterBase::BeginPlay()
 			CurrentWeapon->WeaponIsNowInHand(true);
 			OnRep_AttachWeapon();
 		}
-		//if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(SecondWeaponClass, SpawnParams))
-		//{
-		//	Weapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
-		//	WeaponArray.Add(Weapon);
-		//}
-		//if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(ThirdWeaponClass, SpawnParams))
-		//{
-		//	Weapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
-		//	WeaponArray.Add(Weapon);
-		//}
 	}
+}
+
+// Called to bind functionality to input
+void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// set up gameplay key bindings
+	check(PlayerInputComponent);
+
+	// Bind jump events
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ACharacterBase::OnAimingStart);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ACharacterBase::OnAimingEnd);
+
+	// Bind fire event
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACharacterBase::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACharacterBase::OnStopFire);
+
+	PlayerInputComponent->BindAction("SelectFireWeaponToggle", IE_Pressed, this, &ACharacterBase::ChangeWeaponFireMode);
+
+	PlayerInputComponent->BindAction("SwitchNextWeapon", IE_Pressed, this, &ACharacterBase::SwitchNextWeapon);
+	PlayerInputComponent->BindAction("SwitchPreviousWeapon", IE_Pressed, this, &ACharacterBase::SwitchPreviousWeapon);
+
+	
+	// Bind movement events
+	PlayerInputComponent->BindAxis("MoveForward", this, &ACharacterBase::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ACharacterBase::MoveRight);
+
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("TurnRate", this, &ACharacterBase::TurnAtRate);
+	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &ACharacterBase::LookUpAtRate);
 }
 
 void ACharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -112,6 +136,7 @@ void ACharacterBase::OnRep_AttachWeapon()
 		if (IsLocallyControlled())//remove true
 		{
 			CurrentWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
+			RefreshAmmoWidget();
 		}
 		else
 		{
@@ -125,6 +150,8 @@ void ACharacterBase::SwitchNextWeapon()
 	UE_LOG(LogTemp, Warning, TEXT("Switching To Next Weapon"));
 	if (CurrentWeapon)
 	{
+		if (CurrentWeapon->IsFiring()) return;
+		
 		if (WeaponArray.Num() > WeaponIndex + 1)
 		{
 			++WeaponIndex;
@@ -146,6 +173,7 @@ void ACharacterBase::SwitchNextWeapon()
 			}
 		}
 		Server_SwitchWeapon(CurrentWeapon, WeaponIndex);
+		RefreshAmmoWidget();
 	}
 }
 
@@ -154,6 +182,8 @@ void ACharacterBase::SwitchPreviousWeapon()
 	UE_LOG(LogTemp, Warning, TEXT("Switching To Previous Weapon"));
 	if (CurrentWeapon)
 	{
+		if (CurrentWeapon->IsFiring()) return;
+		
 		if (WeaponIndex - 1 >= 0)
 		{
 			--WeaponIndex;
@@ -175,42 +205,17 @@ void ACharacterBase::SwitchPreviousWeapon()
 			}
 		}
 		Server_SwitchWeapon(CurrentWeapon, WeaponIndex);
+		RefreshAmmoWidget();
 	}
 }
 
-// Called to bind functionality to input
-void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACharacterBase::RefreshAmmoWidget()
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	// set up gameplay key bindings
-	check(PlayerInputComponent);
-
-	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ACharacterBase::OnAimingStart);
-	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ACharacterBase::OnAimingEnd);
-
-	// Bind fire event
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACharacterBase::OnFire);
-	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACharacterBase::OnStopFire);
-
-	PlayerInputComponent->BindAction("SelectFireWeaponToggle", IE_Pressed, this, &ACharacterBase::ChangeWeaponFireMode);
-
-	PlayerInputComponent->BindAction("SwitchNextWeapon", IE_Pressed, this, &ACharacterBase::SwitchNextWeapon);
-	PlayerInputComponent->BindAction("SwitchPreviousWeapon", IE_Pressed, this, &ACharacterBase::SwitchPreviousWeapon);
-
-	
-	// Bind movement events
-	PlayerInputComponent->BindAxis("MoveForward", this, &ACharacterBase::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ACharacterBase::MoveRight);
-
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &ACharacterBase::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &ACharacterBase::LookUpAtRate);
+	if (CurrentWeapon)
+	{
+		TArray<int32> CurrentAmmo = CurrentWeapon->GetCurrentAmmo();
+		OnAmmoChanged.Broadcast(CurrentAmmo[0], CurrentAmmo[1]);
+	}
 }
 
 void ACharacterBase::OnFire()

@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
@@ -129,11 +128,19 @@ protected:
 	bool Multi_Reload_Validate();
 	virtual void Multi_Reload_Implementation();
 
+	UFUNCTION(Client, Reliable)
+		void Client_RefillAmmo();
+	void Client_RefillAmmo_Implementation();
+
+private:
+	bool bIsFiring;
+
 public:	
 	virtual void Fire();
 	virtual void StopFiring();
 	virtual void ChangeFireMode();
 	FWeaponDamage GetWeaponDamage();
+	virtual bool IsFiring() {return bIsFiring;}
 
 	//0 = cant reload, 1  = reload with ammo in mag, 2 = reload with empty magazine
 	virtual void Reload();
@@ -141,6 +148,11 @@ public:
 	//first element is Magazine Ammo, second element is Total Ammo
 	TArray<int32> GetCurrentAmmo();
 	int32 GetMagazineAmmo();
+
+	UFUNCTION(BlueprintCallable)
+		void RefillAmmo();
+
+	bool IsTotalAmmoFull() {return CurrentTotalAmmo == WeaponMaxAmmo;}
 
 	class UAnimMontage* GetFPSAnimMontage();
 

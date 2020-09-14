@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/Useables/Weapons/Knife.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
@@ -87,6 +86,8 @@ void AKnife::OnKnife()
 	{
 		if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
 		{
+			if (Player->IsPerformingAction()) return;
+			
 			if (UAnimInstance* AnimInstance = Player->GetMesh1P()->GetAnimInstance())
 			{
 				AnimInstance->Montage_Play(FPSArmsMontage);
@@ -95,8 +96,10 @@ void AKnife::OnKnife()
 				else
 					AnimInstance->Montage_JumpToSection(FName("KnifeAttack1"), FPSArmsMontage);
 			}
+
+			Player->SetPerformingAction(true);
 		}
-		
+
 		if (GetWorld()->IsServer())
 			Multi_KnifeAttack();
 		else

@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/MainMenu/NaziZombieBeaconClient.h"
 

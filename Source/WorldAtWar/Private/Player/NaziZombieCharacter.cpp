@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/InteractableBase.h"
@@ -17,6 +16,7 @@ ANaziZombieCharacter::ANaziZombieCharacter()
 {
 	Interactable = nullptr;
 	InteractionRange = 150.0f;
+	bIsPerformingAction = false;
 }
 
 void ANaziZombieCharacter::BeginPlay()
@@ -68,6 +68,11 @@ void ANaziZombieCharacter::OnRep_KnifeAttached()
 	}
 }
 
+void ANaziZombieCharacter::RefreshInteractableObject()
+{
+	Interactable = nullptr;
+}
+
 void ANaziZombieCharacter::Interact()
 {
 	if (Interactable)
@@ -76,6 +81,8 @@ void ANaziZombieCharacter::Interact()
 			Interactable->Use(this);
 		else
 			Server_Interact(Interactable);
+
+		Interactable = nullptr;
 	}
 }
 
@@ -108,13 +115,11 @@ void ANaziZombieCharacter::SetInteractableObject()
 	AInteractableBase* Temp = Cast<AInteractableBase>(HitResult.GetActor());
 	if (Interactable == nullptr && Temp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IS NOW A VALID POINTER"));
 		Interactable = Temp;
-		NewInteractMessage.Broadcast(Interactable->GetUIMessage());
+		NewInteractMessage.Broadcast(Interactable->GetUIMessage(this));
 	}
 	else if (Interactable && Temp == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IS NOW A NULL PTR"));
 		Interactable = nullptr;
 		NewInteractMessage.Broadcast(FString());
 	}
@@ -143,7 +148,10 @@ void ANaziZombieCharacter::GivePlayerWeapon(AWeaponBase* Weapon)
 void ANaziZombieCharacter::OnFire()
 {
 	if (CurrentWeapon)
-		CurrentWeapon->Fire();
+	{
+		CurrentWeapon->Fire();//if fire valid
+		RefreshAmmoWidget();
+	}
 }
 
 void ANaziZombieCharacter::OnStopFire()

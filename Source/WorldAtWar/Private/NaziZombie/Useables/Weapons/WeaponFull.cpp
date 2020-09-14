@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/Useables/Weapons/WeaponFull.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
@@ -149,6 +148,8 @@ void AWeaponFull::OnClientFire()
 			}
 			if (!GetWorld()->IsServer())
 				Server_Fire(HitResults);
+
+			ShootingPlayer->RefreshAmmoWidget();
 		}
 	}
 	else
@@ -164,6 +165,9 @@ void AWeaponFull::Fire()
 {
 	if (!bIsFiring && bIsInFullAuto && bCanFire)//and is in full auto
 	{
+		if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
+			if (Player->IsPerformingAction()) return;
+		
 		bIsFiring = true;
 		
 		bCanFire = false;

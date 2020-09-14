@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,7 +15,7 @@ public:
 	AInteractableBase();
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+	UPROPERTY(BlueprintReadOnly, Category = "Nazi Zombie Settings")
 		FString UIMessage;
 
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
@@ -27,6 +26,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	FString GetUIMessage();
+	virtual FString GetUIMessage(class ANaziZombieCharacter* Player);
 	virtual void Use(class ANaziZombieCharacter* Player);
 };

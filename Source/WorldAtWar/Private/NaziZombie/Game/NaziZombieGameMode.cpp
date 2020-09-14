@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameMode.h"
 #include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameState.h"
@@ -129,6 +128,8 @@ void ANaziZombieGameMode::SpawnZombie()
 		
 		if (ZombiesRemaining > 0 && ZombieGameState->GetZombiesOnMap() <= MaxZombiesOnMapAtOnce - 1)
 		{
+			if (ActiveZombieSpawnPoints.Num() < 1) return;
+			
 			int RandomIndex = FMath::RandRange(0, ActiveZombieSpawnPoints.Num() - 1);
 
 			if (ANaziZombieZombieSpawnPoint* SpawnPoint = ActiveZombieSpawnPoints[RandomIndex])

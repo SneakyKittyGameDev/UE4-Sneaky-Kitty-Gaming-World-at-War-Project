@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
@@ -48,4 +47,5 @@ public:
 	virtual void Fire() override;
 	virtual void StopFiring() override;
 	virtual void ChangeFireMode() override;
+	virtual bool IsFiring() override {return bIsFiring;}
 };

@@ -1,3 +1,5 @@
+//Copyright 2020, Cody Dawe, All rights reserved
+
 
 #include "WorldAtWar/Public/NaziZombie/Useables/Weapons/WeaponSemi.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"

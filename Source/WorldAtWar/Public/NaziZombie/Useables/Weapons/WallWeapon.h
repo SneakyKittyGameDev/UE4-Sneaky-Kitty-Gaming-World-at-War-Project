@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
@@ -34,6 +33,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		uint16 Cost;
 
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		uint16 AmmoCost;
+
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponPurchased)
 		bool bIsUsed;
 
@@ -45,10 +47,16 @@ protected:
 	FTimerHandle TLerpMesh;
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		float MeshLerpSpeed;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Nazi Zombie Settings")
+		FString AmmoUIMessage;
 	
 protected:
 	virtual void BeginPlay() override;
 
+	void PurchaseAmmo(class ANaziZombieCharacter* Player);
+
 public:
+	virtual FString GetUIMessage(class ANaziZombieCharacter* Player) override;
 	virtual void Use(class ANaziZombieCharacter* Player) override;
 };

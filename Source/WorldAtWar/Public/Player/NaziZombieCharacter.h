@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 #pragma once
 
 #include "CoreMinimal.h"
@@ -34,6 +33,8 @@ protected:
 	UFUNCTION()
 		void OnRep_KnifeAttached();
 
+	bool bIsPerformingAction;
+
 protected:
 	void Interact();
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -54,6 +55,13 @@ protected:
 	
 public:
 	void GivePlayerWeapon(class AWeaponBase* Weapon);
+
+	UFUNCTION(BlueprintCallable)
+		void SetPerformingAction(bool IsPerformingAction) {bIsPerformingAction = IsPerformingAction;}
+	UFUNCTION(BlueprintCallable)
+		bool IsPerformingAction() {return bIsPerformingAction;}
+
+	void RefreshInteractableObject();
 
 protected:
 	virtual void BeginPlay() override;

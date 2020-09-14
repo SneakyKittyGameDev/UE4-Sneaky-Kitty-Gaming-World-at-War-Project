@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/Useables/Barricade.h"
 #include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameMode.h"
@@ -16,18 +15,19 @@ ABarricade::ABarricade()
 	RootComponent = MeshComp;
 
 	CollisionMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
-
+	CollisionMesh->SetupAttachment(MeshComp);
+	
 	Cost = 500;
 	AccessZone = 0;
 
-	UIMessage += "Door [Cost: " + FString::FromInt(Cost) + "]";
 	bIsUsed = false;
 }
 
 void ABarricade::BeginPlay()
 {
 	Super::BeginPlay();
-	SetReplicates(true);
+
+	UIMessage.Append(FString(" [Cost: " + FString::FromInt(Cost) + "]"));
 }
 
 void ABarricade::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

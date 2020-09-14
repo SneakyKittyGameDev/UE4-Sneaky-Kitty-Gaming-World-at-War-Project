@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/NaziZombie/Useables/WeaponBase.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
@@ -17,8 +16,6 @@ AWeaponBase::AWeaponBase()
 	RootComponent = WeaponMesh;
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	SetReplicates(true);
-
 	WeaponName = "Default Name";
 	DelayBetweenShots = 0.14;
 	WeaponMaxAmmo = 255;
@@ -28,6 +25,9 @@ AWeaponBase::AWeaponBase()
 	CurrentMagazineAmmo = MagazineMaxAmmo;
 
 	bCanFire = true;
+	bIsFiring = false;
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -147,12 +147,20 @@ void AWeaponBase::Multi_Fire_Implementation(const FHitResult& HitResult)
 void AWeaponBase::ControlFireDelay()
 {
 	bCanFire = true;
+	bIsFiring = false;
+	if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
+	{
+		Player->SetPerformingAction(false);
+		Player->RefreshAmmoWidget();
+	}
 }
 
 void AWeaponBase::Fire()
 {
 	if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
 	{
+		if (Player->IsPerformingAction()) return;
+		
 		if (CurrentMagazineAmmo > 0 && bCanFire)
 		{
 			if (UAnimInstance* AnimInstance = Player->GetMesh1P()->GetAnimInstance())
@@ -169,6 +177,7 @@ void AWeaponBase::Fire()
 			
 			--CurrentMagazineAmmo;
 			bCanFire = false;
+			bIsFiring = true;
 			
 			if (CurrentMagazineAmmo <= 0 && FireEmptyAnimation)
 					WeaponMesh->PlayAnimation(FireEmptyAnimation, false);
@@ -261,6 +270,7 @@ void AWeaponBase::Reload()
 	{
 		if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
 		{
+			if (Player->IsPerformingAction()) return;
 			bool bMagazineIsEmpty = CurrentMagazineAmmo <= 0;
 
 			if (UAnimInstance* AnimInstance = Player->GetMesh1P()->GetAnimInstance())
@@ -310,6 +320,8 @@ void AWeaponBase::Reload()
 				CurrentTotalAmmo = 0;
 			}
 
+			Player->SetPerformingAction(true);
+
 			if (GetWorld()->IsServer())
 				Multi_Reload();
 			else
@@ -326,6 +338,27 @@ TArray<int32> AWeaponBase::GetCurrentAmmo()
 int32 AWeaponBase::GetMagazineAmmo()
 {
 	return CurrentMagazineAmmo;
+}
+
+void AWeaponBase::Client_RefillAmmo_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT REFILL AMMO"));
+	RefillAmmo();
+}
+
+void AWeaponBase::RefillAmmo()
+{
+	if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(GetOwner()))
+	{
+		CurrentTotalAmmo = WeaponMaxAmmo;
+		if (HasAuthority() && !Player->IsLocallyControlled())
+			Client_RefillAmmo();
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("REFRESHING AMMO WIDGET"));
+			Player->RefreshAmmoWidget();
+		}
+	}
 }
 
 UAnimMontage* AWeaponBase::GetFPSAnimMontage()
