@@ -4,6 +4,7 @@
 #include "WorldAtWar/Public/NaziZombie/Useables/MysteryBox.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/WeaponBase.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
+#include "WorldAtWar/Public/Player/NaziZombiePlayerState.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -35,6 +36,9 @@ AMysteryBox::AMysteryBox()
 
 	BoxWeaponArrayLength = 0;
 	WeaponArrayIndex = 0;
+	
+	UsingPlayer = nullptr;
+	bCanGrabWeapon = false;
 }
 
 void AMysteryBox::BeginPlay()
@@ -72,6 +76,8 @@ void AMysteryBox::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMysteryBox, bCanUseBox);
+	DOREPLIFETIME(AMysteryBox, bCanGrabWeapon);
+	DOREPLIFETIME(AMysteryBox, UsingPlayer);
 	DOREPLIFETIME(AMysteryBox, BoxWeaponArray);
 }
 
@@ -82,8 +88,15 @@ void AMysteryBox::AbleToGrabWeapon()
 	GetWorld()->GetTimerManager().SetTimer(TLowerWeapon, this, &AMysteryBox::LowerWeapon, 0.01f, true);
 
 	CycleWeaponSpeed = CycleWeaponStartingSpeed;
+	
+	if (HasAuthority())
+		bCanGrabWeapon = true;
 
-	FTimerHandle TBoxFinished;
+	if (ANaziZombieCharacter* Player = Cast<ANaziZombieCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		Player->RefreshInteractableObject();
+	}
+	
 	GetWorld()->GetTimerManager().SetTimer(TBoxFinished, this, &AMysteryBox::BoxInteractionFinished, 11.0f, false);
 }
 
@@ -91,11 +104,19 @@ void AMysteryBox::BoxInteractionFinished()
 {
 	UE_LOG(LogTemp, Warning, TEXT("BOX INTERACTION FINISHED"));
 	GetWorld()->GetTimerManager().ClearTimer(TLowerWeapon);
+	GetWorld()->GetTimerManager().ClearTimer(TRaiseWeapon);
+	GetWorld()->GetTimerManager().ClearTimer(TCycleWeapons);
+	GetWorld()->GetTimerManager().ClearTimer(TBoxFinished);
+	
 	if (CloseAnimation)
 		MysteryBoxMesh->PlayAnimation(CloseAnimation, false);
 	
 	if (HasAuthority())
+	{
 		bCanUseBox = true;
+		UsingPlayer = nullptr;
+		bCanGrabWeapon = false;
+	}
 	
 	HideAllWeapons();
 
@@ -103,6 +124,8 @@ void AMysteryBox::BoxInteractionFinished()
 	{
 		Player->RefreshInteractableObject();
 	}
+	
+	CurrentLocation = BottomLocation;
 }
 
 void AMysteryBox::HideAllWeapons()
@@ -186,17 +209,53 @@ FString AMysteryBox::GetUIMessage(ANaziZombieCharacter* Player)
 {
 	if (bCanUseBox)
 		return UIMessage;
-	else
-		return FString();
+	if (Player && UsingPlayer && Player == UsingPlayer && bCanGrabWeapon)
+		return FString("Press F To Grab Weapon");
+	
+	return FString();
+}
+
+bool AMysteryBox::Multi_BoxFinished_Validate()
+{
+	return true;
+}
+
+void AMysteryBox::Multi_BoxFinished_Implementation()
+{
+	BoxInteractionFinished();
+}
+
+void AMysteryBox::GrabWeapon()
+{
+	if (UsingPlayer && SelectedWeapon)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = UsingPlayer;
+		
+		if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(SelectedWeapon->GetClass(), SpawnParams))
+		{
+			UsingPlayer->GivePlayerWeapon(Weapon);
+			Multi_BoxFinished();
+		}
+	}
 }
 
 void AMysteryBox::Use(ANaziZombieCharacter* Player)
 {
 	if (HasAuthority() && Player && bCanUseBox)
 	{
+		if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
+			if (!PState->DecrementPoints(Cost))
+				return;
+		
 		bCanUseBox = false;
+		UsingPlayer = Player;
 		
 		uint8 RandomIndex = FMath::RandRange(0, BoxWeaponArrayLength);
 		Multi_BoxUsed(RandomIndex);
+	}
+	else if (HasAuthority() && bCanGrabWeapon && Player && UsingPlayer && Player == UsingPlayer)
+	{
+		GrabWeapon();
 	}
 }

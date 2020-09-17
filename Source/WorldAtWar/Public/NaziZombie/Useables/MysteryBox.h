@@ -58,6 +58,7 @@ protected:
 	FTimerHandle TRaiseWeapon;
 	FTimerHandle TLowerWeapon;
 	FTimerHandle TCycleWeapons;
+	FTimerHandle TBoxFinished;
 	
 	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		float CycleWeaponStartingSpeed;
@@ -70,6 +71,11 @@ protected:
 
 	class AWeaponBase* SelectedWeapon;
 	class AWeaponBase* PreviousWeapon;
+
+	UPROPERTY(Replicated)
+		class ANaziZombieCharacter* UsingPlayer;
+	UPROPERTY(Replicated)
+		bool bCanGrabWeapon;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -80,11 +86,17 @@ protected:
 	void LowerWeapon();
 	void CycleWeapon();
 	void HideAllWeapons();
+	void GrabWeapon();
 
 	UFUNCTION(NetMulticast, Reliable, WithValidation)
 		void Multi_BoxUsed(uint8 RandomIndex);
 	bool Multi_BoxUsed_Validate(uint8 RandomIndex);
 	void Multi_BoxUsed_Implementation(uint8 RandomIndex);
+
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+		void Multi_BoxFinished();
+	bool Multi_BoxFinished_Validate();
+	void Multi_BoxFinished_Implementation();
 	
 public:
 	virtual FString GetUIMessage(class ANaziZombieCharacter* Player) override;
