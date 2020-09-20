@@ -5,7 +5,8 @@
 #include "GameFramework/PlayerState.h"
 #include "NaziZombiePlayerState.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPointsChanged, int32, NewPoints);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPointsChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClientsReady);
 
 UCLASS()
 class WORLDATWAR_API ANaziZombiePlayerState : public APlayerState
@@ -16,16 +17,27 @@ public:
 
 protected:
 	UPROPERTY(BlueprintAssignable)
-		FPointsChanged NewPoints;
+		FOnPointsChanged OnPointsChanged;
+	UPROPERTY(BlueprintAssignable)
+		FOnClientsReady OnClientsReady;
 
-	UPROPERTY(ReplicatedUsing = OnRep_PointsChanged, EditDefaultsOnly)//Set To Replicate MOVE TO PLAYER STATE WHEN CREATED
+	UPROPERTY(Replicated, EditDefaultsOnly)//Set To Replicate MOVE TO PLAYER STATE WHEN CREATED
 		int32 Points;
-	UFUNCTION()
-		void OnRep_PointsChanged();
+
+	void OnNewPlayerJoined();
+
+protected:
+	virtual void BeginPlay() override;
 
 public:
+	UFUNCTION(Client, Reliable)
+		void Client_OnClientsReady();
+	void Client_OnClientsReady_Implementation();
+	
 	void IncrementPoints(uint16 Value);
 	bool DecrementPoints(uint16 Value);
+	UFUNCTION(BlueprintCallable)
+		void UpdatePointsWidget();
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetPoints();

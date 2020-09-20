@@ -3,6 +3,7 @@
 #include "WorldAtWar/Public/NaziZombie/Useables/Weapons/WeaponFull.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
 #include "WorldAtWar/Public/NaziZombie/Zombie/ZombieBase.h"
+#include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameState.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
@@ -110,7 +111,15 @@ void AWeaponFull::OnClientFire()
 	{
 		if (ANaziZombieCharacter* ShootingPlayer = Cast<ANaziZombieCharacter>(GetOwner()))
 		{
-			--CurrentMagazineAmmo;
+			if (ANaziZombieGameState* GS = GetWorld()->GetGameState<ANaziZombieGameState>())
+			{
+				if (!GS->CheatIgnoreAmmo())
+					--CurrentMagazineAmmo;
+			}
+			else
+			{
+				--CurrentMagazineAmmo;
+			}
 
 			if (UAnimInstance* AnimInstance = ShootingPlayer->GetMesh1P()->GetAnimInstance())
 			{

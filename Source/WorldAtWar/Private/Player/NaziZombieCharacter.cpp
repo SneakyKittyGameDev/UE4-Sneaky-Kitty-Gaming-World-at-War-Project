@@ -17,6 +17,7 @@ ANaziZombieCharacter::ANaziZombieCharacter()
 	Interactable = nullptr;
 	InteractionRange = 150.0f;
 	bIsPerformingAction = false;
+	bHasAllWeapons = false;
 }
 
 void ANaziZombieCharacter::BeginPlay()
@@ -77,9 +78,9 @@ void ANaziZombieCharacter::Interact()
 {
 	if (Interactable)
 	{
-		if (HasAuthority())
-			Interactable->Use(this);
-		else
+		Interactable->Use(this);
+		
+		if (!HasAuthority())
 			Server_Interact(Interactable);
 
 		Interactable = nullptr;
@@ -125,12 +126,12 @@ void ANaziZombieCharacter::SetInteractableObject()
 	}
 }
 
-void ANaziZombieCharacter::GivePlayerWeapon(AWeaponBase* Weapon)
+void ANaziZombieCharacter::GivePlayerWeapon(AWeaponBase* Weapon, bool DontReplace)
 {
 	if (HasAuthority() && Weapon)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ADDING WEAPON TO WEAPON ARRAY"));
-		if (WeaponArray.Num() >= 2)
+		if (WeaponArray.Num() >= 2 && !DontReplace)
 		{
 			WeaponArray[WeaponIndex]->Destroy();
 			WeaponArray[WeaponIndex] = Weapon;

@@ -234,7 +234,7 @@ void AMysteryBox::GrabWeapon()
 		
 		if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(SelectedWeapon->GetClass(), SpawnParams))
 		{
-			UsingPlayer->GivePlayerWeapon(Weapon);
+			UsingPlayer->GivePlayerWeapon(Weapon, false);
 			Multi_BoxFinished();
 		}
 	}
@@ -242,17 +242,20 @@ void AMysteryBox::GrabWeapon()
 
 void AMysteryBox::Use(ANaziZombieCharacter* Player)
 {
-	if (HasAuthority() && Player && bCanUseBox)
+	if (Player && bCanUseBox)
 	{
 		if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
 			if (!PState->DecrementPoints(Cost))
 				return;
-		
-		bCanUseBox = false;
-		UsingPlayer = Player;
-		
-		uint8 RandomIndex = FMath::RandRange(0, BoxWeaponArrayLength);
-		Multi_BoxUsed(RandomIndex);
+
+		if (HasAuthority())
+		{
+			bCanUseBox = false;
+			UsingPlayer = Player;
+			
+			uint8 RandomIndex = FMath::RandRange(0, BoxWeaponArrayLength);
+			Multi_BoxUsed(RandomIndex);
+		}
 	}
 	else if (HasAuthority() && bCanGrabWeapon && Player && UsingPlayer && Player == UsingPlayer)
 	{

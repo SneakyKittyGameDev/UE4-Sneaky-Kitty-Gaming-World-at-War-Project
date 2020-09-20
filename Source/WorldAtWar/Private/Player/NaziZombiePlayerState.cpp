@@ -1,7 +1,7 @@
 //Copyright 2020, Cody Dawe, All rights reserved
 
 #include "WorldAtWar/Public/Player/NaziZombiePlayerState.h"
-
+#include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameState.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -17,32 +17,48 @@ void ANaziZombiePlayerState::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	DOREPLIFETIME(ANaziZombiePlayerState, Points);
 }
 
-void ANaziZombiePlayerState::OnRep_PointsChanged()
+void ANaziZombiePlayerState::Client_OnClientsReady_Implementation()
 {
-	NewPoints.Broadcast(Points);
+	OnClientsReady.Broadcast();
+	//FTimerHandle TTempHandle;
+	//GetWorld()->GetTimerManager().SetTimer(TTempHandle, this, &ANaziZombiePlayerState::OnNewPlayerJoined, 2.0f, false);
+}
+
+void ANaziZombiePlayerState::OnNewPlayerJoined()
+{
+	//OnClientsReady.Broadcast();
+}
+
+void ANaziZombiePlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FTimerHandle TPointsUpdate;
+	GetWorld()->GetTimerManager().SetTimer(TPointsUpdate, this, &ANaziZombiePlayerState::UpdatePointsWidget, 0.05f, true);
+}
+
+void ANaziZombiePlayerState::UpdatePointsWidget()
+{
+	OnPointsChanged.Broadcast();
 }
 
 void ANaziZombiePlayerState::IncrementPoints(uint16 Value)
 {
 	Points += Value;
-	if (HasAuthority())
-		OnRep_PointsChanged();
-	NewPoints.Broadcast(Points);
+	
+	OnPointsChanged.Broadcast();
 	//UE_LOG(LogTemp, Warning, TEXT("POINTS: %d"), Points);
 }
 
 bool ANaziZombiePlayerState::DecrementPoints(uint16 Value)
 {
-	if (HasAuthority())
-	{
-		if (Points - Value < 0)
-			return false;
-		else
-			Points -= Value;
+	if (Points - Value < 0)
+		return false;
+	else
+		Points -= Value;
 
-		OnRep_PointsChanged();
-		UE_LOG(LogTemp, Warning, TEXT("POINTS: %d"), Points);
-	}
+	OnPointsChanged.Broadcast();
+	//UE_LOG(LogTemp, Warning, TEXT("POINTS: %d"), Points);
 	return true;
 }
 

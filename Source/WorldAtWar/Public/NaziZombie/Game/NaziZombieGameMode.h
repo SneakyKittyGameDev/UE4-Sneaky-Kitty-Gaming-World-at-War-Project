@@ -43,11 +43,13 @@ protected:
 protected:
 	void CalculateZombieCount();
 	void SpawnZombie();
-
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
+	void TempOnClientsReady();
+	
 	void SetSpawnPoints();
 
 public:

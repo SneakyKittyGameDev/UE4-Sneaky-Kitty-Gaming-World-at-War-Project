@@ -47,7 +47,7 @@ void ABarricade::OnRep_BarricadeUsed()
 
 void ABarricade::Use(ANaziZombieCharacter* Player)
 {
-	if (HasAuthority() && !bIsUsed && Player)
+	if (!bIsUsed && Player)
 	{
 		if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
 		{
@@ -55,12 +55,16 @@ void ABarricade::Use(ANaziZombieCharacter* Player)
 				return;
 
 			UE_LOG(LogTemp, Warning, TEXT("IN USE FUNCTION FOR %s"), *GetName());
-			bIsUsed = true;
-			OnRep_BarricadeUsed();
 
-			if (ANaziZombieGameMode* GM = GetWorld()->GetAuthGameMode<ANaziZombieGameMode>())
+			if (HasAuthority())
 			{
-				GM->NewZoneActive(AccessZone);
+				bIsUsed = true;
+				OnRep_BarricadeUsed();
+
+				if (ANaziZombieGameMode* GM = GetWorld()->GetAuthGameMode<ANaziZombieGameMode>())
+				{
+					GM->NewZoneActive(AccessZone);
+				}
 			}
 		}
 	}

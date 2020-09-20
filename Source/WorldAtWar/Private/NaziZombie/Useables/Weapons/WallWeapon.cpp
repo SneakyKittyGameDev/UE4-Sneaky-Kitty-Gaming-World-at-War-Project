@@ -76,14 +76,14 @@ FString AWallWeapon::GetUIMessage(ANaziZombieCharacter* Player)
 
 void AWallWeapon::PurchaseAmmo(ANaziZombieCharacter* Player)
 {
-	if (HasAuthority() && Player)
+	if (Player)
 	{
 		if (Player->GetCurrentWeapon() && Player->GetCurrentWeapon()->IsA(WeaponClass) && !Player->GetCurrentWeapon()->IsTotalAmmoFull())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("PURCHASING AMMO FOR: %s"), *Player->GetCurrentWeapon()->GetName());
 
 			if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
-				if (!PState->DecrementPoints(Cost))
+				if (!PState->DecrementPoints(AmmoCost))
 					return;
 
 			Player->GetCurrentWeapon()->RefillAmmo();
@@ -93,7 +93,7 @@ void AWallWeapon::PurchaseAmmo(ANaziZombieCharacter* Player)
 
 void AWallWeapon::Use(ANaziZombieCharacter* Player)
 {
-	if (HasAuthority() && Player)
+	if (Player)
 	{		
 		for (AWeaponBase* Weapon : *Player->GetWeaponArray())
 			if (Weapon)
@@ -106,18 +106,21 @@ void AWallWeapon::Use(ANaziZombieCharacter* Player)
 		if (ANaziZombiePlayerState* PState = Player->GetPlayerState<ANaziZombiePlayerState>())
 			if (!PState->DecrementPoints(Cost))
 				return;
-		
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = Player;
-		if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, SpawnParams))//check WeaponClass valid
+
+		if (HasAuthority())
 		{
-			//Weapon->SetActorLocation(Player->GetActorLocation());
-			Player->GivePlayerWeapon(Weapon);
-			UE_LOG(LogTemp, Warning, TEXT("SPAWNED WEAPON"));
-			if (!bIsUsed)
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = Player;
+			if (AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, SpawnParams))//check WeaponClass valid
 			{
-				bIsUsed = true;
-				OnRep_WeaponPurchased();
+				//Weapon->SetActorLocation(Player->GetActorLocation());
+				Player->GivePlayerWeapon(Weapon, false);
+				UE_LOG(LogTemp, Warning, TEXT("SPAWNED WEAPON"));
+				if (!bIsUsed)
+				{
+					bIsUsed = true;
+					OnRep_WeaponPurchased();
+				}
 			}
 		}
 	}

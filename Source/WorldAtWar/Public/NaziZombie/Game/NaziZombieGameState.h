@@ -16,14 +16,24 @@ public:
 	ANaziZombieGameState();
 	
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
 		uint16 RoundNumber;//set to replicate
 	uint8 ZombiesOnMap;//set to replicate
 	uint16 TotalZombiesRemaining;//set to replicate
 	float ZombieHealth;
 
+	UPROPERTY(Replicated)
+		bool bIgnoreAmmo;
+	UPROPERTY(EditAnywhere, Category = "Nazi Zombie Settings")
+		TArray<TSubclassOf<class AWeaponBase>> GiveAllWeaponsClasses;
+	
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(Exec)
+		void sf_use_ignoreAmmo(bool IgnoreAmmo);
+	UFUNCTION(Exec)
+		void GiveAll();
 	
 public:
 	uint16 GetRoundNumber();
@@ -34,4 +44,7 @@ public:
 	uint8 GetZombiesOnMap();
 	void ZombieSpawned();
 	float GetZombieHealth();
+
+	UFUNCTION(BlueprintCallable)
+		FORCEINLINE bool CheatIgnoreAmmo() {return bIgnoreAmmo;}
 };

@@ -34,6 +34,7 @@ protected:
 		void OnRep_KnifeAttached();
 
 	bool bIsPerformingAction;
+	bool bHasAllWeapons;
 
 protected:
 	void Interact();
@@ -54,7 +55,7 @@ protected:
 		FORCEINLINE class AKnife* GetKnife() {return Knife;}
 	
 public:
-	void GivePlayerWeapon(class AWeaponBase* Weapon);
+	void GivePlayerWeapon(class AWeaponBase* Weapon, bool DontReplace);
 
 	UFUNCTION(BlueprintCallable)
 		void SetPerformingAction(bool IsPerformingAction) {bIsPerformingAction = IsPerformingAction;}
@@ -62,6 +63,9 @@ public:
 		bool IsPerformingAction() {return bIsPerformingAction;}
 
 	void RefreshInteractableObject();
+
+	FORCEINLINE bool HasAllWeapons() {return bHasAllWeapons;}
+	void SetHasAllWeapons() {bHasAllWeapons = true;}
 
 protected:
 	virtual void BeginPlay() override;

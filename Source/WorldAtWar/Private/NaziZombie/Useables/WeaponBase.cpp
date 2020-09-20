@@ -3,6 +3,7 @@
 #include "WorldAtWar/Public/NaziZombie/Useables/WeaponBase.h"
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
 #include "WorldAtWar/Public/NaziZombie/Zombie/ZombieBase.h"
+#include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameState.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
@@ -95,7 +96,16 @@ void AWeaponBase::Server_Fire_Implementation(const TArray<FHitResult>& HitResult
 {
 	if (CurrentMagazineAmmo > 0)
 	{
-		--CurrentMagazineAmmo;
+		if (ANaziZombieGameState* GS = GetWorld()->GetGameState<ANaziZombieGameState>())
+		{
+			if (!GS->CheatIgnoreAmmo())
+				--CurrentMagazineAmmo;
+		}
+		else
+		{
+			--CurrentMagazineAmmo;
+		}
+
 		if (HitResults.Num() > 0)
 		{
 			for (FHitResult Result : HitResults)
@@ -174,8 +184,16 @@ void AWeaponBase::Fire()
 						AnimInstance->Montage_JumpToSection(FName("FireHip"), FPSArmsMontage);
 				}
 			}
-			
-			--CurrentMagazineAmmo;
+
+			if (ANaziZombieGameState* GS = GetWorld()->GetGameState<ANaziZombieGameState>())
+			{
+				if (!GS->CheatIgnoreAmmo())
+					--CurrentMagazineAmmo;
+			}
+			else
+			{
+				--CurrentMagazineAmmo;
+			}
 			bCanFire = false;
 			bIsFiring = true;
 			

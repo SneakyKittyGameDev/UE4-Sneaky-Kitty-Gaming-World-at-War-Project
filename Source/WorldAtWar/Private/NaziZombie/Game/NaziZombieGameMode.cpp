@@ -7,6 +7,7 @@
 #include "WorldAtWar/Public/Player/NaziZombieCharacter.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/Barricade.h"
 #include "WorldAtWar/Public/NaziZombie/Zombie/ZombieBase.h"
+#include "WorldAtWar/Public/Player/NaziZombiePlayerState.h"
 
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
@@ -53,6 +54,9 @@ void ANaziZombieGameMode::BeginPlay()
 	GetWorld()->GetTimerManager().SetTimer(TZombieSpawnHandle, this, &ANaziZombieGameMode::SpawnZombie, 1.0f, true);
 	GetWorld()->GetTimerManager().PauseTimer(TZombieSpawnHandle);
 	CalculateZombieCount();
+
+	FTimerHandle TTempClientReady;
+	GetWorld()->GetTimerManager().SetTimer(TTempClientReady, this, &ANaziZombieGameMode::TempOnClientsReady, 5.0f, false);
 }
 
 void ANaziZombieGameMode::SetSpawnPoints()
@@ -71,13 +75,24 @@ void ANaziZombieGameMode::SetSpawnPoints()
 	bHasLoadedSpawnPoints = true;
 }
 
+void ANaziZombieGameMode::TempOnClientsReady()
+{
+	for (APlayerState* PState : GetGameState<ANaziZombieGameState>()->PlayerArray)
+	{
+		if (ANaziZombiePlayerState* PNState = Cast<ANaziZombiePlayerState>(PState))
+		{
+			PNState->Client_OnClientsReady();
+		}
+	}
+}
+
 void ANaziZombieGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
 	if (bHasLoadedSpawnPoints == false)
 		SetSpawnPoints();
-
+	
 	for (ANaziZombiePlayerSpawnPoint* SpawnPoint : PlayerSpawnPoints)
 	{
 		if (!SpawnPoint->IsUsed())

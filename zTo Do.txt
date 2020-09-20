@@ -6,14 +6,12 @@ when a new message comes in it will automatically scroll to the bottom of the ch
 Also, on your text committed you can add a "Set Text" node to the input message and leave it blank, 
 which should clear the text on enter.
 
-show anim notify for sounds in reload animations
-
 fix knifing issue on client
 
 if you spam shoot/knife at the same time your knife gets stuck in your hand
 
-points not working correctly on clients when shooting zombies
-
 reloading while shooting in full auto needs work to correct it
 
 left clicking while reloading updates ammo widget, prevent this
+
+spawn zombies via object pooling
