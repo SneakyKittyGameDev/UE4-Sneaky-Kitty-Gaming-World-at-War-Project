@@ -154,7 +154,6 @@ void ANaziZombieGameMode::SpawnZombie()
 
 				if (AZombieBase* Zombie = GetWorld()->SpawnActor<AZombieBase>(ZombieClass, Loc, Rot))
 				{
-					
 					ZombieGameState->ZombieSpawned();
 					--ZombiesRemaining;
 				}

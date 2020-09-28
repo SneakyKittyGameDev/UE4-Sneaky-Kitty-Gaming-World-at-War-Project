@@ -20,7 +20,7 @@ void UNaziZombieGameInstanceBase::GenerateServerList()
 
 	Request->OnProcessRequestComplete().BindUObject(this, &UNaziZombieGameInstanceBase::OnServerListRequestComplete);
 
-	Request->SetURL("https://localhost:44389/api/Host");
+	Request->SetURL(GetWebAPIURL());
 	Request->SetVerb("GET");
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 

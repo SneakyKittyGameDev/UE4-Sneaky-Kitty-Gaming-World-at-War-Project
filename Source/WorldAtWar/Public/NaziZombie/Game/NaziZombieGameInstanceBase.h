@@ -51,6 +51,9 @@ public:
 
 protected:
 	FHttpModule* Http;
+	const FString WebAPIURL = FString("https://gametestserver.gear.host/api/Host/");
+	//https://localhost:44389/api/Host
+	//https://gametestserver.gear.host/api/Host
 
 	TArray<FServerData> ServerList;
 
@@ -67,4 +70,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void GoToMap(FString MAPURL);
+
+public:
+	const FString& GetWebAPIURL() {return WebAPIURL;}
 };

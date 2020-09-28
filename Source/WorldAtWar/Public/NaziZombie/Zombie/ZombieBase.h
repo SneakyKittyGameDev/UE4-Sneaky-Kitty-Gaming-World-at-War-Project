@@ -27,6 +27,8 @@ protected:
 		void OnRep_Die();
 	void OnCleanup();
 
+	bool bIsActive;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -37,7 +39,13 @@ protected:
 
 	uint8 GetPointsForHit(uint8 HitPart, float Damage);
 
+	void Activate();
+	void Deactivate();
+
 public:
 	void Hit(class ANaziZombieCharacter* Player, class AKnife* Knife);
 	void Hit(class ANaziZombieCharacter* Player, FHitResult HitResult);
+
+	void SetActive(bool Active);
+	bool IsActive() { return bIsActive; }
 };

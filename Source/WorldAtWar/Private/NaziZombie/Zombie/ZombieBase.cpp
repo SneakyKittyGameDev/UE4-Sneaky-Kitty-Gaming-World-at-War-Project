@@ -18,6 +18,7 @@ AZombieBase::AZombieBase()
 {
 	Health = 150;
 	bIsDead = false;
+	bIsActive = false;
 	CleanupDelay = 5.0f;
 }
 
@@ -189,4 +190,22 @@ void AZombieBase::Hit(ANaziZombieCharacter* Player, FHitResult HitResult)
 			}
 		}
 	}
+}
+
+void AZombieBase::Activate()
+{
+	bIsActive = true;
+}
+
+void AZombieBase::Deactivate()
+{
+	bIsActive = false;
+}
+
+void AZombieBase::SetActive(bool Active)
+{
+	if (Active)
+		Activate();
+	else
+		Deactivate();	
 }

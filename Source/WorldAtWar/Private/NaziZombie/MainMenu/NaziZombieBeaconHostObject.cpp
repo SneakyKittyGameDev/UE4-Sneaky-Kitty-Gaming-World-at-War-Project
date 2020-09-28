@@ -2,7 +2,7 @@
 
 #include "WorldAtWar/Public/NaziZombie/MainMenu/NaziZombieBeaconHostObject.h"
 #include "WorldAtWar/Public/NaziZombie/MainMenu/NaziZombieBeaconClient.h"
-#include "WorldAtWar/Public/NaziZombie/MainMenu/NaziZombieMainMenuGameMode.h"
+#include "WorldAtWar/Public/NaziZombie/Game/NaziZombieGameInstanceBase.h"
 
 #include "OnlineBeaconHost.h"
 #include "TimerManager.h"
@@ -48,13 +48,20 @@ void ANaziZombieBeaconHostObject::SetServerData(FServerData NewServerData)
 
 	Request->OnProcessRequestComplete().BindUObject(this, &ANaziZombieBeaconHostObject::OnProcessRequestComplete);
 
-	Request->SetURL("https://localhost:44389/api/Host");
-	Request->SetVerb("POST");
-	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	if (UNaziZombieGameInstanceBase* GI = GetGameInstance<UNaziZombieGameInstanceBase>())
+	{
+		Request->SetURL(GI->GetWebAPIURL());
+		Request->SetVerb("POST");
+		Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 
-	Request->SetContentAsString(JsonString);
+		Request->SetContentAsString(JsonString);
 
-	Request->ProcessRequest();
+		Request->ProcessRequest();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FAILED TO CAST GAME INSTANCE"));
+	}
 }
 
 void ANaziZombieBeaconHostObject::UpdateServerData(FServerData NewServerData)
@@ -78,13 +85,20 @@ void ANaziZombieBeaconHostObject::UpdateServerData(FServerData NewServerData)
 
 	Request->OnProcessRequestComplete().BindUObject(this, &ANaziZombieBeaconHostObject::OnProcessRequestComplete);
 
-	Request->SetURL("https://localhost:44389/api/Host/1");
-	Request->SetVerb("PUT");
-	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	if (UNaziZombieGameInstanceBase* GI = GetGameInstance<UNaziZombieGameInstanceBase>())
+	{
+		Request->SetURL(GI->GetWebAPIURL() + FString("1"));
+		Request->SetVerb("PUT");
+		Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 
-	Request->SetContentAsString(JsonString);
+		Request->SetContentAsString(JsonString);
 
-	Request->ProcessRequest();
+		Request->ProcessRequest();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FAILED TO CAST GAME INSTANCE"));
+	}
 }
 
 int ANaziZombieBeaconHostObject::GetCurrentPlayerCount()
@@ -197,11 +211,18 @@ void ANaziZombieBeaconHostObject::ShutdownServer()
 		//REMOVE SERVER ENTRY FROM DATA TABLE
 		TSharedRef<IHttpRequest> Request = Http->CreateRequest();
 
-		Request->SetURL("https://localhost:44389/api/Host/" + FString::FromInt(ServerID));
-		Request->SetVerb("DELETE");
-		Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+		if (UNaziZombieGameInstanceBase* GI = GetGameInstance<UNaziZombieGameInstanceBase>())
+		{
+			Request->SetURL(GI->GetWebAPIURL() + FString::FromInt(ServerID));
+			Request->SetVerb("DELETE");
+			Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 
-		Request->ProcessRequest();
+			Request->ProcessRequest();
+		}
+		else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FAILED TO CAST GAME INSTANCE"));
+	}
 	}
 }
 
