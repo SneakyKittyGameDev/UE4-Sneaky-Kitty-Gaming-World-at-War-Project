@@ -3,8 +3,8 @@
 #include "WorldAtWar/Public/Player/CharacterBase.h"
 #include "WorldAtWar/WorldAtWarProjectile.h"
 #include "WorldAtWar/Public/NaziZombie/Useables/WeaponBase.h"
+#include "WorldAtWar/Public/NaziZombie/Useables/Weapons/Knife.h"
 
-#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -62,6 +62,12 @@ void ACharacterBase::BeginPlay()
 			CurrentWeapon->WeaponIsNowInHand(true);
 			OnRep_AttachWeapon();
 		}
+
+		Knife = GetWorld()->SpawnActor<AKnife>(KnifeClass, SpawnParams);
+		if (Knife)
+		{
+			OnRep_KnifeAttached();
+		}
 	}
 }
 
@@ -84,6 +90,8 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACharacterBase::OnFire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACharacterBase::OnStopFire);
 
+	PlayerInputComponent->BindAction("KnifeAttack", IE_Pressed, this, &ACharacterBase::OnKnifeAttack);
+	
 	PlayerInputComponent->BindAction("SelectFireWeaponToggle", IE_Pressed, this, &ACharacterBase::ChangeWeaponFireMode);
 
 	PlayerInputComponent->BindAction("SwitchNextWeapon", IE_Pressed, this, &ACharacterBase::SwitchNextWeapon);
@@ -105,6 +113,7 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACharacterBase, CurrentWeapon);
+	DOREPLIFETIME(ACharacterBase, Knife);
 	DOREPLIFETIME_CONDITION(ACharacterBase, WeaponIndex, COND_OwnerOnly);
 	DOREPLIFETIME(ACharacterBase, WeaponArray);
 	DOREPLIFETIME_CONDITION(ACharacterBase, bIsAiming, COND_SkipOwner);
@@ -142,6 +151,17 @@ void ACharacterBase::OnRep_AttachWeapon()
 		{
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_weaponSocket"));
 		}
+	}
+}
+
+void ACharacterBase::OnRep_KnifeAttached()
+{
+	if (Knife)
+	{
+		if (IsLocallyControlled())
+			Knife->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
+		else
+			Knife->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("s_knifeHolster"));
 	}
 }
 
@@ -226,6 +246,14 @@ void ACharacterBase::OnFire()
 void ACharacterBase::OnStopFire()
 {
 	
+}
+
+void ACharacterBase::OnKnifeAttack()
+{
+	if (Knife)
+	{
+		Knife->OnKnife();
+	}
 }
 
 void ACharacterBase::ChangeWeaponFireMode()

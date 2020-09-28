@@ -25,14 +25,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
 		float InteractionRange;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
-		TSubclassOf<class AKnife> KnifeClass;
-
-	UPROPERTY(ReplicatedUsing = OnRep_KnifeAttached)
-		class AKnife* Knife;
-	UFUNCTION()
-		void OnRep_KnifeAttached();
-
 	bool bIsPerformingAction;
 	bool bHasAllWeapons;
 
@@ -48,11 +40,6 @@ protected:
 	virtual void OnFire() override;
 	virtual void OnStopFire() override;
 	void OnReload();
-
-	void OnKnifeAttack();
-
-	UFUNCTION(BlueprintCallable)
-		FORCEINLINE class AKnife* GetKnife() {return Knife;}
 	
 public:
 	void GivePlayerWeapon(class AWeaponBase* Weapon, bool DontReplace);

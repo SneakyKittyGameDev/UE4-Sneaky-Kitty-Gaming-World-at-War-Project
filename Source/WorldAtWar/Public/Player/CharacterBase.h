@@ -47,6 +47,19 @@ protected:
 	UPROPERTY(Replicated)
 		TArray<AWeaponBase*> WeaponArray;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Nazi Zombie Settings")
+		TSubclassOf<class AKnife> KnifeClass;
+
+	UPROPERTY(ReplicatedUsing = OnRep_KnifeAttached)
+		class AKnife* Knife;
+	UFUNCTION()
+		void OnRep_KnifeAttached();
+
+		void OnKnifeAttack();
+
+	UFUNCTION(BlueprintCallable)
+		FORCEINLINE class AKnife* GetKnife() {return Knife;}
+
 	//set to replicate, skip owner
 	UPROPERTY(Replicated)
 		bool bIsAiming;
