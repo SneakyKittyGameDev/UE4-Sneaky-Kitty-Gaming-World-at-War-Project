@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{40768745-46C2-FD88-4A06-6AA0E3DFFBD3}",
+	"EngineAssociation": "4.25",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -42,10 +42,6 @@
 		},
 		{
 			"Name": "LiveLink",
-			"Enabled": true
-		},
-		{
-			"Name": "PythonScriptPlugin",
 			"Enabled": true
 		}
 	]
